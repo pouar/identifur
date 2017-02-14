@@ -1,0 +1,44 @@
+<?php
+define("IDENTIFURPATH", "https://www.pouar.net/identifurfcgi/");
+function userpickit_identifur_userpickit_info() {
+	$picture_types = array();
+
+	$defaults = array(
+		'callback' => 'userpickit_identifur_userpickit_picture',
+	);
+
+	$picture_types['identifur'] = array(
+		'title' => t('Identifur'),
+		'description' => t('Generated Fursona Based On Your Username'),
+		'user cache invalidate' => TRUE,
+	) + $defaults;
+
+	return $picture_types;
+}
+
+function userpickit_identifur_userpickit_picture($picture_type, $account) {
+
+	$result = array();
+	if(!empty($account->uid))
+	{
+		$result['uri'] = url(IDENTIFURPATH."?height=100&value=".$account->name);
+	}
+	else
+	{
+		if (!empty($_SERVER['HTTP_CLIENT_IP']))   //check ip from share internet
+		{
+			$ip=$_SERVER['HTTP_CLIENT_IP'];
+		}
+		elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))   //to check ip is pass from proxy
+		{
+			$ip=$_SERVER['HTTP_X_FORWARDED_FOR'];
+		}
+		else
+		{
+			$ip=$_SERVER['REMOTE_ADDR'];
+		}
+		$result['uri'] = url(IDENTIFURPATH."?height=100&value=".$ip);
+	}
+	$result['cache lifetime'] = USERPICKIT_CACHE_DISABLE;
+	return $result;
+}

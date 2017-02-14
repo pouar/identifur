@@ -1,0 +1,5 @@
+Drupal Integration for my Identifur icon generator. Similar to identicons, but generates fursonas
+The actual generator can be downloaded from here
+https://www.pouar.net/downloads/pastebin/index.php?file=identifur.php
+Edit the constant IDENTIFURPATH in userpickit_identifur.module to point to this file
+This module requires userpickit to work
