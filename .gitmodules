@@ -4,3 +4,6 @@
 [submodule "php-xxhash"]
 	path = php-xxhash
 	url = https://github.com/Megasaxon/php-xxhash.git
+[submodule "qs_parse"]
+	path = qs_parse
+	url = https://github.com/bartgrantham/qs_parse.git
