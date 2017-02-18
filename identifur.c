@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <float.h>
+#include <bsd/bsd.h>
 #include "xxHash/xxhash.h"
 /*
 * You need xxhash.c and xxhash.h from https://github.com/Cyan4973/xxHash to compile this
@@ -9,6 +11,7 @@
 */
 int main(int argc, char **argv)
 {
+	const char *errstr;
 	if(argc<2)
 	{
 		fprintf(stderr,"syntax: identifur STRING [HEIGHT]\n");
@@ -17,13 +20,19 @@ int main(int argc, char **argv)
 	uint64_t hash = XXH32(argv[1], strlen(argv[1]), 0);
 	double height=1024.0;
 	double newheight;
-	if( argc > 2)
+	if( argc < 3)
 	{
-		newheight=atoi(argv[2]);
+		newheight=1024.0;
 	}
 	else
-	{ 
-		newheight=1024.0;
+	{
+		newheight=(double)strtonum(argv[2],0,(int)DBL_MAX,&errstr);
+		if(errstr!=NULL)
+		{
+			fprintf(stderr,"variable 'height' is %s\n",errstr);
+			exit(1);
+			
+		}
 	}
 	uint16_t rgb1=((hash >> 20) & 0xfff);
 	uint16_t rgb2=((hash >> 8) & 0xfff);
