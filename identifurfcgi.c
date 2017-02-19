@@ -1,26 +1,11 @@
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <float.h>
-#include <bsd/bsd.h>
 #include "xxHash/xxhash.h"
-#include "qs_parse/qs_parse.h"
-#include <fcgi_stdio.h>
-/*
-* You need xxhash.c and xxhash.h from https://github.com/Cyan4973/xxHash to compile this
-* gcc -O2 -o identifur xxhash.c identifur.c -s
-*/
-// Helper macro to convert two-character hex strings to character value
-#define ToHex(Y) (Y>='0'&&Y<='9'?Y-'0':Y-'A'+10)
+#include <kcgi.h>
 
-char *InputData;
-char *kvpairs[256];
-char value[256];
 
-char getValue[256];
-char getHeight[256];
 double height=1024.0;
 double newheight;
 uint64_t hash;
@@ -30,45 +15,65 @@ uint8_t tail;
 uint8_t ears;
 uint8_t wings;
 uint8_t clothes;
-char basepath[4096];
-char tailpaths[4][4096];
-char earspaths[4][4096];
-char wingspaths[4][4096];
-char clothespaths[4][4096];
+uint8_t basepath[4096];
+uint8_t output[40960];
+uint8_t tailpaths[4][4096];
+uint8_t earspaths[4][4096];
+uint8_t wingspaths[4][4096];
+uint8_t clothespaths[4][4096];
+
+enum key {
+	KEY_VALUE,
+	KEY_HEIGHT,
+	KEY__MAX
+};
 
 
-int main(int argc, char **argv)
-{
-	const char *errstr;
-	while (FCGI_Accept() >= 0)
-	{
-		
-		InputData = strdup(getenv("QUERY_STRING"));
-		qs_parse(InputData, kvpairs, 256);
-		if (qs_scanvalue("value", InputData, getValue, sizeof(getValue)) == NULL )
+
+static const struct kvalid keys[KEY__MAX] = {
+	{ kvalid_stringne, "value" }, /* KEY_VALUE */
+	{ kvalid_int, "height" }, /* KEY_HEIGHT */
+};
+int main(void) {
+	struct kreq r;
+	struct kfcgi *fcgi;
+	struct kpair *p;
+
+
+	if (KCGI_OK != khttp_fcgi_init(&fcgi, keys, KEY__MAX, NULL, 0, 0))
+		return(EXIT_FAILURE); 
+ 
+	while (KCGI_OK == khttp_fcgi_parse(fcgi, &r)) {
+
+		if (!(p = r.fieldmap[KEY_VALUE]) )
 		{
-			printf("Content-Type: text/plain\r\n\r\n");
-			printf("GET variable 'value' is undefined");
+			
+			khttp_head(&r, "Content-Type", "%s", "text/plain");
+			khttp_body(&r); 
+			khttp_puts(&r, "GET variable 'value' is undefined");
+			khttp_free(&r);
 			continue;
 		}
-		
-		hash = XXH32(getValue, strlen(getValue), 0);
-		if(qs_scanvalue("height", InputData, getHeight, sizeof(getHeight)) == NULL)
+		hash = XXH32(p->parsed.s, strlen(p->parsed.s), 0);
+		if((p = r.fieldmap[KEY_HEIGHT]))
 		{
-			newheight=1024.0;
+			newheight=p->parsed.i;
+		}
+		else if(r.fieldnmap[KEY_HEIGHT])
+		{
+			khttp_head(&r, "Content-Type", "%s", "text/plain");
+			khttp_body(&r); 
+			khttp_puts(&r, "GET variable 'height' is invalid");
+			khttp_free(&r);
+			continue;
 		}
 		else
 		{
-			newheight=(double)strtonum(getHeight,0,(int)DBL_MAX,&errstr);
-			if(errstr!=NULL)
-			{
-				printf("Content-Type: text/plain\r\n\r\n");
-				printf("GET variable 'height' is %s",errstr);
-				continue;
-				
-			}
+			newheight=height;
 		}
-		printf("Content-Type: image/svg+xml\r\n\r\n");
+		khttp_head(&r, "Content-Type", "%s", "image/svg+xml");
+		khttp_body(&r);
+	
 		rgb1=((hash >> 20) & 0xfff);
 		rgb2=((hash >> 8) & 0xfff);
 		tail=((hash >> 6) & 0b11);
@@ -92,7 +97,11 @@ int main(int argc, char **argv)
 		sprintf(clothespaths[1],"<path d=\"m471.86523 391.59375c-36.84971 19.21281-64.12163 79.24861-74.38671 105.52344 14.75047 5.88404 40.51051 16.70007 55.05273 18.63281 6.40702-29.84712 19.32613-44.06446 20.72656-48.61523.13344 54.82647-.3092 111.71392-1.47656 169.51367h104.7207c-1.28301-65.59488-2.1067-127.58323-1.58593-172.37696 4.29705 13.46937 9.96287 31.74774 12.73046 41.25586 14.16889 0 36.5531-8.54644 49.97461-10.67382-8.75523-31.37734-25.56647-68.64499-61.62109-102.17579-31.3279 19.14482-71.06851 29.99383-104.13477-1.08398z\" fill=\"#%03x\" fill-rule=\"evenodd\" stroke=\"#%03x\" transform=\"scale(.26458333)\"/>",rgb2,rgb2);
 		sprintf(clothespaths[2],"<path d=\"m159.96584 210.77731-7.43303-42.33074c-.33947-17.35532-.5574-33.7564-.41961-45.60808 1.13692 3.56377 2.636 8.39993 3.36826 10.91562 3.74885 0 9.67134-2.26125 13.22245-2.82412-2.31649-8.30192-6.76446-18.16232-16.30391-27.03401-8.28884 5.0654-18.80354 7.93587-27.55233-.2868-9.74982 5.08339-16.96551 20.96786-19.68148 27.91974 3.90273 1.55682 10.71841 4.41856 14.56604 4.92993 1.69519-7.89705 5.11337-11.65872 5.4839-12.86278.0353 14.50617-.0818 29.55764-.39068 44.8505l-10.48659 41.95676z\" fill=\"#%03x\" fill-rule=\"evenodd\" stroke=\"#%03x\" stroke-width=\".26458332\"/>",rgb2,rgb2);
 		sprintf(clothespaths[3],"<ellipse cx=\"138.94554\" cy=\"142.06779\" rx=\"9.4711866\" ry=\"35.588699\" style=\"fill:#%03x;fill-rule:evenodd;stroke:#%03x;stroke-width:.26458332;stroke-linecap:round;stroke-linejoin:round\"/>",rgb2,rgb2);
-		printf("<svg height=\"%u\" viewBox=\"0 0 %f %f\" width=\"%u\" xmlns=\"http://www.w3.org/2000/svg\"><g transform=\"scale(%f)\">%s\n%s%s%s%s</g>\n</svg>\n",(int)newheight,(newheight/height)*270.93332,(newheight/height)*270.93333,(int)newheight,newheight/height,basepath,tailpaths[tail],earspaths[ears],wingspaths[wings],clothespaths[clothes]);
+		sprintf(output,"<svg height=\"%u\" viewBox=\"0 0 %f %f\" width=\"%u\" xmlns=\"http://www.w3.org/2000/svg\"><g transform=\"scale(%f)\">%s\n%s%s%s%s</g>\n</svg>\n",(int)newheight,(newheight/height)*270.93332,(newheight/height)*270.93333,(int)newheight,newheight/height,basepath,tailpaths[tail],earspaths[ears],wingspaths[wings],clothespaths[clothes]);
+		khttp_puts(&r, output);
+		khttp_free(&r);
 	}
-	return EXIT_SUCCESS;
+
+	khttp_fcgi_free(fcgi);
+	return(EXIT_SUCCESS);
 }
