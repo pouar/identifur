@@ -23,10 +23,10 @@ else
 }
 $rgb1=sprintf("%03x",(($hash >> 20) & 0xfff));
 $rgb2=sprintf("%03x",(($hash >> 8) & 0xfff));
-$tail=sprintf("%03x",(($hash >> 6) & 0b11));
-$ears=sprintf("%03x",(($hash >> 4) & 0b11));
-$wings=sprintf("%03x",(($hash >> 2) & 0b11));
-$clothes=sprintf("%03x",($hash & 0b11));
+$tail=dechex(($hash >> 6) & 0b11);
+$ears=dechex(($hash >> 4) & 0b11);
+$wings=dechex(($hash >> 2) & 0b11);
+$clothes=dechex($hash & 0b11);
 $tailpaths[0]=<<<EOT
 <path d="m125.67708 169.622c-21.68755-17.39448-45.257138-13.91836-62.744046 4.91369 15.179415 27.56736 46.724746 15.03834 62.589456 6.11444z" fill="#{$rgb1}" fill-rule="evenodd" stroke="#{$rgb1}" stroke-width=".26458332"/>
 EOT;
