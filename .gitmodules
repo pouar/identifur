@@ -4,3 +4,6 @@
 [submodule "php-xxhash"]
 	path = php-xxhash
 	url = https://github.com/Megasaxon/php-xxhash.git
+[submodule "kcgi"]
+	path = kcgi
+	url = https://github.com/kristapsdz/kcgi.git
