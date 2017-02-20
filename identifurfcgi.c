@@ -15,12 +15,12 @@ uint8_t tail;
 uint8_t ears;
 uint8_t wings;
 uint8_t clothes;
-uint8_t basepath[4096];
-uint8_t output[40960];
-uint8_t tailpaths[4][4096];
-uint8_t earspaths[4][4096];
-uint8_t wingspaths[4][4096];
-uint8_t clothespaths[4][4096];
+uint8_t basepath[2048];
+uint8_t output[4096];
+uint8_t tailpaths[4][2048];
+uint8_t earspaths[4][2048];
+uint8_t wingspaths[4][2048];
+uint8_t clothespaths[4][2048];
 
 enum key {
 	KEY_VALUE,
