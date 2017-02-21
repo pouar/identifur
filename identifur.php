@@ -3,19 +3,21 @@
 https://github.com/Megasaxon/php-xxhash
 */
 header('Content-Type: image/svg+xml');
-if (defined('STDIN')) {
-	$hash = hexdec(xxhash64( $argv[1] ));
-} else { 
-	$hash = hexdec(xxhash64( $_GET["value"] ));
+if(!isset($_GET["value"]))
+{
+	header('Content-Type: text/plain');
+	exit("GET variable 'value' must be set");
 }
+$hash = hexdec(xxhash64( $_GET["value"] ));
 $height=1024.0;
-if((empty($_GET["height"]) && !defined('STDIN')) || (empty($argv[2]) && defined('STDIN')) )
+if(empty($_GET["height"])
 {
 	$newheight=1024.0;
 }
-else if (defined('STDIN'))
+else if (!is_numeric($_GET["height"])
 {
-	$newheight= (float)$argv[2];
+	header('Content-Type: text/plain');
+	exit("GET variable 'height' must be numeric");
 }
 else
 { 
